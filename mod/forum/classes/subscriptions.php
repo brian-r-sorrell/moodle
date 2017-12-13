@@ -101,6 +101,14 @@ class subscriptions {
      * @return boolean
      */
     public static function is_subscribed($userid, $forum, $discussionid = null, $cm = null) {
+
+        // MDL-60113
+        // If the forum is hidden, do not send emails; return false
+        $course = get_course($forum->course);
+        if (!$course->visible) {
+            return false;
+        }
+
         // If forum is force subscribed and has allowforcesubscribe, then user is subscribed.
         if (self::is_forcesubscribed($forum)) {
             if (!$cm) {
