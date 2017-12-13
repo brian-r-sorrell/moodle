@@ -793,6 +793,10 @@ if ($mform_post->is_cancelled()) {
         if ($fromform->id = forum_add_new_post($addpost, $mform_post)) {
             $subscribemessage = forum_post_subscription($fromform, $forum, $discussion);
 
+        // MDL-60113:
+        // If this is a hidden forum, then no mail will be sent.
+        // Add a condition to hide this message.
+        if ($course->visible) {
             if (!empty($fromform->mailnow)) {
                 $message .= get_string("postmailnow", "forum");
             } else {
@@ -808,6 +812,7 @@ if ($mform_post->is_cancelled()) {
             } else {
                 $discussionurl = new moodle_url("/mod/forum/discuss.php", array('d' => $discussion->id), 'p'.$fromform->id);
             }
+        }
 
             $params = array(
                 'context' => $modcontext,
@@ -916,14 +921,19 @@ if ($mform_post->is_cancelled()) {
                 $event->add_record_snapshot('forum_discussions', $discussion);
                 $event->trigger();
 
-                if ($fromform->mailnow) {
-                    $message .= get_string("postmailnow", "forum");
-                } else {
-                    $message .= '<p>'.get_string("postaddedsuccess", "forum") . '</p>';
-                    $message .= '<p>'.get_string("postaddedtimeleft", "forum", format_time($CFG->maxeditingtime)) . '</p>';
+                // MDL-60113
+                // If this is a hidden forum, then no mail will be sent.
+                // Add a condition to hide this message.
+                if ($course->visible) {
+                    if ($fromform->mailnow) {
+                        $message .= get_string("postmailnow", "forum");
+                    } else {
+                        $message .= '<p>'.get_string("postaddedsuccess", "forum") . '</p>';
+                        $message .= '<p>'.get_string("postaddedtimeleft", "forum", format_time($CFG->maxeditingtime)) . '</p>';
+                    }
                 }
-
                 $subscribemessage = forum_post_subscription($fromform, $forum, $discussion);
+
             } else {
                 print_error("couldnotadd", "forum", $errordestination);
             }
