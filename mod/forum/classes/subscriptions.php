@@ -103,10 +103,15 @@ class subscriptions {
     public static function is_subscribed($userid, $forum, $discussionid = null, $cm = null) {
 
         // MDL-60113
-        // If the forum is hidden, do not send emails; return false
+        // If the forum is hidden, only send emails to users who can view hidden forums. 
         $course = get_course($forum->course);
         if (!$course->visible) {
-            return false;
+            if (!$cm) {
+                $cm = get_fast_modinfo($forum->course)->instances['forum'][$forum->id];
+            }
+            if (!has_capability('mod/forum:viewhiddentimedposts', \context_module::instance($cm->id), $userid)) {
+                return false;
+            }
         }
 
         // If forum is force subscribed and has allowforcesubscribe, then user is subscribed.
